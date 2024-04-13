@@ -74,6 +74,8 @@
                 </div>
                 <button class="btn btn-primary play-pause-btn" onclick="togglePlayPause()">Play / Pause</button>
                 <button id="mute-button" class="btn btn-secondary mt-2" onclick="toggleMute()">Mute</button>
+                <button id="mute-buttonA" class="btn btn-secondary mt-2" onclick="toggleMuteA()">Mute Video A</button>
+                <button id="mute-buttonB" class="btn btn-secondary mt-2" onclick="toggleMuteB()">Mute Video B</button>
                
              </div>
         </div>
@@ -177,12 +179,25 @@
             }
         }
     
-        function toggleMute() {
-            var muted = dp1.video.muted;
-            dp1.video.muted = !muted;
-            dp2.video.muted = !muted;
-            document.getElementById('mute-button').textContent = muted ? 'Unmute' : 'Mute';
-        }
+       
+function toggleMute() {
+    var muted = dp1.video.muted;
+    dp1.video.muted = !muted;
+    dp2.video.muted = !muted;
+    document.getElementById('mute-button').textContent = muted ? 'Mute' : 'Unmute';
+}
+
+function toggleMuteA() {
+    var muted = dp1.video.muted;
+    dp1.video.muted = !muted;
+    document.getElementById('mute-buttonA').textContent = muted ? 'Mute Video A' : 'Unmute Video A';
+}
+
+function toggleMuteB() {
+    var muted = dp2.video.muted;
+    dp2.video.muted = !muted;
+    document.getElementById('mute-buttonB').textContent = muted ? 'Mute Video B' : 'Unmute Video B';
+}
     </script>
     
 </body>
