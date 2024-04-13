@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online video comparison player</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="https://static.kkk.plus/favicon/favicon.png" sizes="23x23" type="image/x-icon">
+    <style>
+         body {
+            background: linear-gradient(to bottom, #e0ecff, #ffffff);
+        }
+        .video-container {
+            padding: 20px;
+        }
+        .file-input {
+            margin-bottom: 10px;
+        }
+        .progress-container {
+            position: relative;
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            cursor: pointer;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            display: none;
+        }
+        .progress-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: red;
+            position: absolute;
+            top: 5px;
+            transform: translateX(-50%);
+        }
+        .play-pause-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <center>
+            <h2>Online video comparison player (comparison mode)</h2>
+            <h6>Your files will not be uploaded, only in your local browser</h6>
+            <a href="online-video-compare-overlay.html">Click to enter video overlay mode</a>
+            <br>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-translate" viewBox="0 0 16 16">
+                <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/>
+                <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/>
+            </svg><a href="index.html">More Languages</a>
+        </center>
+        <div class="row">
+            <div class="col-md-6 video-container">
+                <input type="file" class="file-input" accept="video/*" onchange="loadVideo(this.files, dp1)">
+                <div id="dplayer1" class="dplayer"></div>
+            </div>
+            <div class="col-md-6 video-container">
+                <input type="file" class="file-input" accept="video/*" onchange="loadVideo(this.files, dp2)">
+                <div id="dplayer2" class="dplayer"></div>
+            </div>
+        </div>
+        <center>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="progress-container" id="master-progress-container" onclick="progressClick(event)">
+                    <div class="progress-bar" id="master-progress" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-indicator" id="progress-indicator" style="left: 0%"></div>
+                </div>
+                <button class="btn btn-primary play-pause-btn" onclick="togglePlayPause()">Play / Pause</button>
+                <button id="mute-button" class="btn btn-secondary mt-2" onclick="toggleMute()">Mute</button>
+               
+             </div>
+        </div>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <label for="offset-input">Enter the offset value (seconds, video B is relative to video A, the progress bar needs to be moved to take effect after applying or canceling):</label>
+                <input type="number" id="offset-input" class="form-control" placeholder="Offset in seconds (default 0)" value="0">
+                <button class="btn btn-success mt-2" onclick="applyOffset()">Apply offset</button>
+                <button class="btn btn-warning mt-2" onclick="cancelOffset()">Cancel offset</button>
+            </div>
+        </div>
+   
+    <hr>
+    <h5>©</h5>
+    </center>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js"></script>
+    <script>
+        var dp1 = new DPlayer({
+            container: document.getElementById('dplayer1'),
+            video: { url: '' },
+            mutex: false
+        });
+        var dp2 = new DPlayer({
+            container: document.getElementById('dplayer2'),
+            video: { url: '' },
+            mutex: false
+        });
+    
+        var videoLoaded = { dp1: false, dp2: false };
+        var offset = 0;
+    
+        function loadVideo(files, player) {
+            if (files.length > 0) {
+                const file = files[0];
+                const url = URL.createObjectURL(file);
+                player.switchVideo({ url: url });
+                player.on('loadeddata', () => {
+                    videoLoaded[player === dp1 ? 'dp1' : 'dp2'] = true;
+                    if (videoLoaded.dp1 && videoLoaded.dp2) {
+                        dp1.play();
+                        dp2.play();
+                        setupTimeUpdateEvent(dp1);
+                        setupTimeUpdateEvent(dp2);
+                    }
+                });
+            }
+        }
+    
+        function setupTimeUpdateEvent(player) {
+            player.on('timeupdate', () => {
+                updateMasterProgress();
+            });
+        }
+    
+        function updateMasterProgress() {
+    var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
+    var currentTime = Math.max(dp1.video.currentTime, dp2.video.currentTime + offset);
+    var percentage = (currentTime / maxDuration) * 100;
+
+    // document.getElementById('master-progress').style.width = percentage + '%'; 
+    document.getElementById('progress-indicator').style.left = percentage + '%';
+}
+
+
+        function progressClick(event) {
+            var progressContainer = document.getElementById('master-progress-container');
+            var max = progressContainer.clientWidth;
+            var x = event.offsetX;
+            var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
+            var time = (x / max) * maxDuration;
+            setPlayersTime(time);
+        }
+    
+        function setPlayersTime(time) {
+            dp1.seek(time);
+            dp2.seek(time + offset);
+            updateMasterProgress();
+        }
+    
+        function applyOffset() {
+            offset = parseFloat(document.getElementById('offset-input').value);
+            updateMasterProgress();
+        }
+    
+        function cancelOffset() {
+            offset = 0;
+            document.getElementById('offset-input').value = "0";
+            updateMasterProgress();
+        }
+    
+        function togglePlayPause() {
+            if (dp1.paused) {
+                dp1.play();
+                dp2.play();
+            } else {
+                dp1.pause();
+                dp2.pause();
+            }
+        }
+    
+        function toggleMute() {
+            var muted = dp1.video.muted;
+            dp1.video.muted = !muted;
+            dp2.video.muted = !muted;
+            document.getElementById('mute-button').textContent = muted ? 'Unmute' : 'Mute';
+        }
+    </script>
+    
+</body>
+</html>

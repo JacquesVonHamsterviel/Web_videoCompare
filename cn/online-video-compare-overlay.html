@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线视频对比播放器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="https://static.kkk.plus/favicon/favicon.png" sizes="23x23" type="image/x-icon">
+    <style>
+         body {
+            background: linear-gradient(to bottom, #e0ecff, #ffffff);
+        }
+        .video-container {
+            position: relative;
+            width: 100%;  /* 或根据视频实际尺寸调整 */
+            height: 360px; /* 或根据视频实际尺寸调整 */
+            margin-bottom: 20px;  /* 根据需要调整间距 */
+        }
+
+        .dplayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .dplayer.overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.5; /* 设置半透明 */
+            z-index: 1; /* 确保这个视频在上层 */
+        }
+
+
+        .file-input {
+            margin-bottom: 10px;
+        }
+        .progress-container {
+            position: relative;
+            width: 100%;
+            height: 20px;
+            background-color: #eee;
+            cursor: pointer;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            display: none;
+        }
+        .progress-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: red;
+            position: absolute;
+            top: 5px;
+            transform: translateX(-50%);
+        }
+        .play-pause-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <center>
+            <h2>在线视频对比播放器（叠加模式）</h2>
+            <h6>你的文件不会被上传，仅在本地浏览器中</h6>
+            <a href="online-video-compare.html">点击进入视频对比模式</a>
+            <br>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-translate" viewBox="0 0 16 16">
+                <path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/>
+                <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/>
+            </svg><a href="../index.html">语言/Languages</a>
+        </center>
+        <div class="col-md-12 video-container">
+            <div id="dplayer1" class="dplayer"></div>
+            <div id="dplayer2" class="dplayer overlay"></div>
+        </div>
+        <h5>选择两个需要被对比的文件</h5>
+        <input type="file" class="file-input" accept="video/*" onchange="loadVideo(this.files, dp1)" >
+        <input type="file" class="file-input" accept="video/*" onchange="loadVideo(this.files, dp2)">
+        <center>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <label for="clip-range">调整视频 B 的横向可见部分:</label>
+                <input type="range" id="clip-range" class="form-control-range" min="0" max="100" value="100" oninput="adjustClip(this.value)">
+            </div>
+        </div>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="progress-container" id="master-progress-container" onclick="progressClick(event)">
+                    <div class="progress-bar" id="master-progress" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-indicator" id="progress-indicator" style="left: 0%"></div>
+                </div>
+                <button class="btn btn-primary play-pause-btn" onclick="togglePlayPause()">播放/暂停</button>
+                <button id="mute-button" class="btn btn-secondary mt-2" onclick="toggleMute()">静音</button>
+                <button id="mute-buttonA" class="btn btn-secondary mt-2" onclick="toggleMuteA()">静音视频A</button>
+                <button id="mute-buttonB" class="btn btn-secondary mt-2" onclick="toggleMuteB()">静音视频B</button>
+               
+             </div>
+        </div>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <label for="offset-input">输入偏移值（秒，视频 B 相对于视频 A，应用或取消后需要移动进度条以生效）:</label>
+                <input type="number" id="offset-input" class="form-control" placeholder="偏移秒数（默认为 0）" value="0">
+                <button class="btn btn-success mt-2" onclick="applyOffset()">应用偏移</button>
+                <button class="btn btn-warning mt-2" onclick="cancelOffset()">取消偏移</button>
+            </div>
+        </div>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <label for="opacity-input">设置视频 B 的透明度 (0-1，例如: 0.5):</label>
+                <input type="number" id="opacity-input" class="form-control" step="0.1" min="0" max="1" value="0.5">
+                <button class="btn btn-success mt-2" onclick="applyOpacity()">应用透明度</button>
+                <button class="btn btn-info mt-2" onclick="resetOpacity()">重置透明度</button>
+            </div>
+        </div>
+        
+        
+    <hr>
+    <h5>©</h5>
+    </center>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js"></script>
+    <script>
+        var dp1 = new DPlayer({ container: document.getElementById('dplayer1'), video: { url: '' }, mutex: false });
+        var dp2 = new DPlayer({ container: document.getElementById('dplayer2'), video: { url: '' }, mutex: false });
+
+
+        var videoLoaded = {dp1: false, dp2: false};
+        function setupTimeUpdateEvent(player) {
+    player.on('timeupdate', () => {
+        updateMasterProgress();
+    });
+}
+
+function updateMasterProgress() {
+    var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
+    var currentTime = Math.max(dp1.video.currentTime, dp2.video.currentTime);
+    var percentage = (currentTime / maxDuration) * 100;
+
+    document.getElementById('master-progress').style.width = percentage + '%';
+    document.getElementById('progress-indicator').style.left = percentage + '%';
+}
+
+function loadVideo(files, player) {
+    if (files.length > 0) {
+        const file = files[0];
+        const url = URL.createObjectURL(file);
+        player.switchVideo({url: url});
+        player.on('loadeddata', () => {
+            videoLoaded[player === dp1 ? 'dp1' : 'dp2'] = true;
+
+            // 检查两个视频是否都已加载
+            if (videoLoaded.dp1 && videoLoaded.dp2) {
+                dp1.play();
+                dp2.play();
+            }
+        });
+    }
+}
+
+
+function progressClick(event) {
+    var progressContainer = document.getElementById('master-progress-container');
+    var max = progressContainer.clientWidth; // 获取进度条容器的宽度
+    var x = event.offsetX; // 获取点击位置相对于进度条容器的X坐标
+    var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
+    var time = (x / max) * maxDuration;
+    var percentage = (x / max) * 100;
+
+    setPlayersTime(time);
+    document.getElementById('master-progress').style.width = percentage + '%';
+    document.getElementById('progress-indicator').style.left = percentage + '%';
+}
+
+var offset = 0; // 初始化偏移量为 0
+
+function applyOffset() {
+    offset = parseFloat(document.getElementById('offset-input').value); // 从输入框获取偏移值
+    updateMasterProgress(); // 更新进度条显示
+}
+
+function cancelOffset() {
+    offset = 0; // 重置偏移量为 0
+    document.getElementById('offset-input').value = "0"; // 重置输入框值
+    updateMasterProgress(); // 更新进度条显示
+}
+
+function updateMasterProgress() {
+    var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
+    // 考虑偏移量，确定当前最先进的时间点
+    var currentTime = Math.max(dp1.video.currentTime, dp2.video.currentTime + offset);
+    var percentage = (currentTime / maxDuration) * 100;
+
+    document.getElementById('master-progress').style.width = percentage + '%';
+    document.getElementById('progress-indicator').style.left = percentage + '%';
+}
+
+function setPlayersTime(time) {
+    dp1.seek(time);
+    dp2.seek(time + offset); // 应用偏移时间
+    updateMasterProgress(); // 确保进度条更新
+}
+
+
+function togglePlayPause() {
+    if (dp1.paused) {
+        dp1.play();
+        dp2.play();
+    } else {
+        dp1.pause();
+        dp2.pause();
+    }
+}
+
+function toggleMute() {
+    var muted = dp1.video.muted;
+    // 设置 DPlayer 的静音状态
+    dp1.video.muted = !muted;
+    dp2.video.muted = !muted;
+    // 更新按钮文本
+    document.getElementById('mute-button').textContent = muted ? '取消静音' : '静音';
+}
+
+function toggleMuteA() {
+    var muted = dp1.video.muted;
+    dp1.video.muted = !muted;
+    // 更新按钮文本
+    document.getElementById('mute-buttonA').textContent = muted ? '静音视频A' : '取消静音视频A';
+}
+
+function toggleMuteB() {
+    var muted = dp2.video.muted;
+    dp2.video.muted = !muted;
+    // 更新按钮文本
+    document.getElementById('mute-buttonB').textContent = muted ? '静音视频B' : '取消静音视频B';
+}
+
+function applyOpacity() {
+    var opacityValue = parseFloat(document.getElementById('opacity-input').value);
+    var videoOverlay = document.getElementById('dplayer2');
+    videoOverlay.style.opacity = opacityValue;
+}
+
+function resetOpacity() {
+    document.getElementById('opacity-input').value = "0.5";
+    document.getElementById('dplayer2').style.opacity = 0.5;
+}
+
+function adjustClip(percentage) {
+    var clipValue = 100 - percentage;
+    document.getElementById('dplayer2').style.clipPath = `inset(0 ${clipValue}% 0 0)`;
+}
+
+
+    </script>
+</body>
+</html>
