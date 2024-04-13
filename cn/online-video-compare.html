@@ -74,6 +74,8 @@
                 </div>
                 <button class="btn btn-primary play-pause-btn" onclick="togglePlayPause()">播放/暂停</button>
                 <button id="mute-button" class="btn btn-secondary mt-2" onclick="toggleMute()">静音</button>
+                <button id="mute-buttonA" class="btn btn-secondary mt-2" onclick="toggleMuteA()">静音视频A</button>
+                <button id="mute-buttonB" class="btn btn-secondary mt-2" onclick="toggleMuteB()">静音视频B</button>
                
              </div>
         </div>
@@ -192,9 +194,22 @@ function toggleMute() {
     dp1.video.muted = !muted;
     dp2.video.muted = !muted;
     // 更新按钮文本
-    document.getElementById('mute-button').textContent = muted ? '取消静音' : '静音';
+    document.getElementById('mute-button').textContent = muted ? '静音' : '取消静音';
 }
 
+function toggleMuteA() {
+    var muted = dp1.video.muted;
+    dp1.video.muted = !muted;
+    // 更新按钮文本
+    document.getElementById('mute-buttonA').textContent = muted ? '静音视频A' : '取消静音视频A';
+}
+
+function toggleMuteB() {
+    var muted = dp2.video.muted;
+    dp2.video.muted = !muted;
+    // 更新按钮文本
+    document.getElementById('mute-buttonB').textContent = muted ? '静音视频B' : '取消静音视频B';
+}
     </script>
 </body>
 </html>
