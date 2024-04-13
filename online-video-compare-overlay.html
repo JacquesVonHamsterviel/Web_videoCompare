@@ -138,11 +138,7 @@
 
 
         var videoLoaded = {dp1: false, dp2: false};
-        function setupTimeUpdateEvent(player) {
-    player.on('timeupdate', () => {
-        updateMasterProgress();
-    });
-}
+        
 
 function updateMasterProgress() {
     var maxDuration = Math.max(dp1.video.duration, dp2.video.duration);
@@ -152,6 +148,7 @@ function updateMasterProgress() {
     document.getElementById('master-progress').style.width = percentage + '%';
     document.getElementById('progress-indicator').style.left = percentage + '%';
 }
+
 
 function loadVideo(files, player) {
     if (files.length > 0) {
@@ -257,7 +254,13 @@ function adjustClip(percentage) {
     document.getElementById('dplayer2').style.clipPath = `inset(0 ${clipValue}% 0 0)`;
 }
 
+function setupTimeUpdateEvent(player) {
+    player.on('timeupdate', () => {
+        updateMasterProgress();
+    });
+}
 
+setupTimeUpdateEvent(dp1);
     </script>
 </body>
 </html>
